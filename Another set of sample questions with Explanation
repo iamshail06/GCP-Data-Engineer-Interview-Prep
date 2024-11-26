@@ -1,0 +1,122 @@
+21. How would you use Dataflow for both batch and stream processing?
+Answer: Dataflow, built on Apache Beam, supports both batch and stream processing through a unified programming model. It can handle finite datasets for batch processing and continuous streams for real-time analytics.
+
+Batch Processing:
+Batch processing involves processing a finite dataset all at once.
+
+Example:
+
+python
+import apache_beam as beam
+from apache_beam.options.pipeline_options import PipelineOptions
+
+options = PipelineOptions()
+p = beam.Pipeline(options=options)
+
+(p 
+ | 'Read from CSV' >> beam.io.ReadFromText('gs://my-bucket/input.csv')
+ | 'Parse CSV' >> beam.Map(lambda line: line.split(','))
+ | 'Filter Data' >> beam.Filter(lambda record: int(record[2]) > 10)
+ | 'Write to BigQuery' >> beam.io.WriteToBigQuery(
+     'my-project:dataset.table',
+     schema='column1:STRING,column2:STRING,column3:INTEGER'
+   ))
+
+p.run().wait_until_finish()
+Stream Processing:
+Stream processing involves processing data in real-time as it arrives.
+
+Example:
+
+python
+import apache_beam as beam
+from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
+
+options = PipelineOptions()
+options.view_as(StandardOptions).streaming = True
+p = beam.Pipeline(options=options)
+
+(p 
+ | 'Read from Pub/Sub' >> beam.io.ReadFromPubSub(subscription='projects/my-project/subscriptions/my-subscription')
+ | 'Parse JSON' >> beam.Map(lambda message: json.loads(message))
+ | 'Filter Data' >> beam.Filter(lambda record: int(record['value']) > 10)
+ | 'Write to BigQuery' >> beam.io.WriteToBigQuery(
+     'my-project:dataset.table',
+     schema='column1:STRING,column2:STRING,column3:INTEGER'
+   ))
+
+p.run().wait_until_finish()
+22. What is the difference between Pub/Sub and Kafka?
+Answer:
+
+Google Pub/Sub: A fully managed service designed for global scalability without infrastructure overhead. Ideal for real-time analytics and event-driven architectures.
+
+Kafka: Offers more control at the cost of manual management. Suitable for high-throughput data streams and requires managing clusters and brokers.
+
+Example Use Cases:
+
+Pub/Sub: Real-time user activity tracking on a website.
+
+Kafka: Log aggregation from multiple services for centralized processing.
+
+23. Explain Cloud Spanner and its ideal use cases.
+Answer: Cloud Spanner is a horizontally scalable, strongly consistent relational database designed for high availability and strong consistency.
+
+Ideal Use Cases:
+
+Financial systems that require strong consistency and high availability.
+
+Online transaction processing (OLTP) applications.
+
+Global applications needing consistent performance and availability.
+
+Example:
+
+sql
+CREATE TABLE Singers (
+  SingerId INT64 NOT NULL,
+  FirstName STRING(1024),
+  LastName STRING(1024)
+) PRIMARY KEY (SingerId);
+24. How would you manage late-arriving data in a streaming pipeline?
+Answer: Utilize windowing and watermarks in Dataflow to define acceptable lateness and handle late data.
+
+Example:
+
+python
+import apache_beam as beam
+from apache_beam.transforms import window
+
+options = PipelineOptions()
+options.view_as(StandardOptions).streaming = True
+p = beam.Pipeline(options=options)
+
+(p 
+ | 'Read from Pub/Sub' >> beam.io.ReadFromPubSub(subscription='projects/my-project/subscriptions/my-subscription')
+ | 'Parse JSON' >> beam.Map(lambda message: json.loads(message))
+ | 'Window' >> beam.WindowInto(window.FixedWindows(60), allowed_lateness=60, trigger=window.AfterWatermark())
+ | 'Filter Data' >> beam.Filter(lambda record: int(record['value']) > 10)
+ | 'Write to BigQuery' >> beam.io.WriteToBigQuery(
+     'my-project:dataset.table',
+     schema='column1:STRING,column2:STRING,column3:INTEGER'
+   ))
+
+p.run().wait_until_finish()
+25. What role does Cloud Data Fusion play in ETL pipelines?
+Answer: Cloud Data Fusion provides a visual interface for designing and managing ETL processes. It integrates seamlessly with other GCP services, allowing for efficient data transformation and movement.
+
+Use Cases:
+
+Data integration from various sources like databases, cloud storage, and APIs.
+
+Data transformation and enrichment before loading into data warehouses like BigQuery.
+
+Example: Using Cloud Data Fusion, you can create an ETL pipeline to:
+
+Extract data from an on-premises database.
+
+Transform data by applying business logic.
+
+Load data into BigQuery for analytics.
+
+Cloud Data Fusion offers pre-built connectors and transformations, enabling you to design data pipelines without writing code.
