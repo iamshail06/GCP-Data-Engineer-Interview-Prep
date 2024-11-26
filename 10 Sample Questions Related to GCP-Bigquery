@@ -1,0 +1,49 @@
+1. BigQuery Architecture
+BigQuery is a fully managed, serverless data warehouse provided by Google Cloud. Its architecture consists of two main components: the storage layer and the compute layer. The storage layer ingests, stores, and optimizes data, while the compute layer handles query execution1. These layers operate independently, thanks to Google's petabit-scale network, ensuring high performance and scalability.
+
+2. Partitioning and Clustering in BigQuery
+Partitioning: This divides a table into segments called partitions, which are based on a specified column. It helps improve query performance and manage costs by scanning only relevant partitions2.
+
+Clustering: This organizes data within a partition based on one or more columns. It improves query performance by reducing the amount of data scanned3.
+
+3. Difference Between View, Materialized View, and Authorized View
+View: A virtual table created by a query. It is not stored physically and is computed each time it is accessed4.
+
+Materialized View: A physical copy of the base table, stored on disk. It is updated manually or using triggers4.
+
+Authorized View: Allows sharing query results with specific users without giving them access to the underlying data.
+
+4. Data Modelling Concepts: Star and Snowflake Schema
+Star Schema: A simple database schema with a central fact table connected to multiple dimension tables.
+
+Snowflake Schema: A more complex version of the star schema, where dimension tables are normalized into multiple related tables.
+
+5. SCD Types (Slowly Changing Dimensions)
+Type 1: Overwrites old data with new data.
+
+Type 2: Keeps a history of changes by adding new records with timestamps.
+
+Type 3: Adds new columns to store previous values.
+
+6. Internal and External Tables in BigQuery
+Internal Tables: Stored within BigQuery and managed by BigQuery itself.
+
+External Tables: Refer to data stored in external storage systems like Google Cloud Storage or Google Drive.
+
+7. BigQuery Slots vs Reservations
+Slots: Units of computational power that determine the resources allocated to a query.
+
+Reservations: Pre-purchased slots that ensure query performance during peak times.
+
+8. Time Travel and Table Snapshots in BigQuery
+Time Travel: Allows querying historical data within a specified time window.
+
+Table Snapshots: Capture the state of a table at a specific point in time.
+
+9. Getting Metadata of Datasets and Tables in BigQuery
+You can use the bq command-line tool or the BigQuery web UI to list and inspect datasets and tables.
+
+10. Optimization of Query Performance in BigQuery
+Partitioning and Clustering: As mentioned earlier, these help reduce the amount of data scanned.
+
+Query Optimization: Use best practices like avoiding SELECT *, using appropriate data types, and minimizing joins.
