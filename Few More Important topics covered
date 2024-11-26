@@ -1,0 +1,225 @@
+SQL: LEAD, LAG, JOIN, RANK related questions
+1. Write a query to calculate the 7-day moving average of sales for each product in a given range
+sql
+SELECT
+    product_id,
+    sale_date,
+    sale_amount,
+    AVG(sale_amount) OVER (PARTITION BY product_id ORDER BY sale_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg
+FROM
+    sales
+WHERE
+    sale_date BETWEEN '2024-01-01' AND '2024-12-31';
+
+2. Write a query to find the names of any customers who have made a purchase in all categories
+SELECT customer_name
+FROM customers
+JOIN purchases ON customers.customer_id = purchases.customer_id
+JOIN products ON purchases.product_id = products.product_id
+GROUP BY customer_name
+HAVING COUNT(DISTINCT products.category) = (SELECT COUNT(DISTINCT category) FROM products);
+
+3. Write a query that delivers a list of employees without an assigned manager
+SELECT employee_name
+FROM employees
+WHERE manager_id IS NULL;
+
+4. Retrieve the top 10 customers who have spent the most on their single purchase
+SELECT customer_id, MAX(amount) AS max_single_purchase
+FROM purchases
+GROUP BY customer_id
+ORDER BY max_single_purchase DESC
+LIMIT 10;
+
+5. Find the employees who manage the same number of employees as their manager
+WITH emp_counts AS (
+    SELECT manager_id, COUNT(employee_id) AS emp_count
+    FROM employees
+    GROUP BY manager_id
+)
+SELECT e.employee_name
+FROM employees e
+JOIN emp_counts ec1 ON e.employee_id = ec1.manager_id
+JOIN emp_counts ec2 ON e.manager_id = ec2.manager_id
+WHERE ec1.emp_count = ec2.emp_count;
+
+6. List the departments where the average salary is higher than the company’s overall average salary
+WITH overall_avg AS (
+    SELECT AVG(salary) AS company_avg_salary
+    FROM employees
+)
+SELECT department_id, AVG(salary) AS dept_avg_salary
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) > (SELECT company_avg_salary FROM overall_avg);
+
+7. Input and Output Transformation
+Input:
+id| trip_id| source | destination
+1 | 1 | delhi   | Kolkata 
+1 | 2 | Kolkata | hyd
+
+Output:
+SELECT id, 
+       MIN(source) AS source, 
+       MAX(destination) AS destination
+FROM trips
+GROUP BY id;
+
+Let's write a SQL query to handle the flight source and destination problem. The goal is to find the source and final destination for each ID.
+We can use a Common Table Expression (CTE) with a combination of window functions and self-joins to achieve this. Here’s how you can do it:
+
+WITH RecursiveTrips AS (
+  SELECT 
+    id,
+    source AS initial_source,
+    destination,
+    trip_id
+  FROM trips
+  WHERE trip_id = 1  -- Start with the first trip
+  
+  UNION ALL
+  
+  SELECT 
+    t.id,
+    rt.initial_source,
+    t.destination,
+    t.trip_id
+  FROM trips t
+  JOIN RecursiveTrips rt ON t.id = rt.id AND t.source = rt.destination
+  WHERE t.trip_id > rt.trip_id
+)
+
+SELECT 
+  id, 
+  initial_source AS source,
+  MAX(destination) AS destination
+FROM RecursiveTrips
+GROUP BY id, initial_source
+ORDER BY id;
+Explanation:
+1.	Recursive CTE: We start with the first trip (trip_id = 1) as the base case. We then recursively join the trips table on the destination of the previous trip to get the final destination.
+2.	Final Selection: We select the initial source and the maximum destination for each ID to get the overall journey.
+
+
+8. Cost Effective count() vs count(1) vs count(column_name)*
+•	count()*: Counts all rows, including those with null values. Generally optimized by the database engine.
+•	count(1): Counts all rows and is equivalent to count(*) in most databases.
+•	count(column_name): Counts only the non-null values in the specified column.
+BigQuery:
+1. How to optimize performance in BigQuery?
+•	Use partitioned tables.
+•	Use clustering.
+•	Avoid SELECT *.
+•	Use appropriate data types.
+•	Use Materialized Views.
+•	Optimize SQL queries by reviewing execution plans.
+
+2. What is BigQuery Omni?
+BigQuery Omni is a multi-cloud analytics solution that allows you to analyze data across multiple cloud platforms (Google Cloud, AWS, Azure) using the same interface.
+3. What is BigQuery Object Table?
+BigQuery Object Table is a table type that allows you to store and query semi-structured data, such as JSON objects, directly in BigQuery.
+4. Capacitor in BigQuery
+Capacitor is BigQuery’s storage format that uses a columnar structure, which is optimized for reading and reduces the amount of data scanned.
+5. How can we implement row-level access in BigQuery?
+Row-level access in BigQuery can be implemented using authorized views or by using row-level security policies to restrict access to specific rows in a table.
+6. Types of Slots in BigQuery
+•	On-demand slots: Automatically allocated based on query requirements.
+•	Reserved slots: Pre-purchased slots for predictable query performance.
+7. Difference between Big Lake tables and external tables
+•	Big Lake Tables: Designed to unify data lakes and data warehouses, allowing you to query data stored in multiple formats and locations.
+•	External Tables: Allow you to query data stored outside of BigQuery, such as in Google Cloud Storage.
+8. OLAP vs. OLTP
+•	OLAP (Online Analytical Processing): Used for data analysis and reporting, involving complex queries on large datasets.
+•	OLTP (Online Transaction Processing): Used for day-to-day operations, involving simple queries on small datasets.
+9. When to use star schema vs. snowflake schema for data modeling?
+•	Star Schema: Best for simplicity and performance when the data is not highly normalized.
+•	Snowflake Schema: Best for more normalized data and complex relationships between tables.
+10. What is a factless fact table and how to design a fact table?
+•	Factless Fact Table: A fact table without any measure, used to capture events or relationships.
+•	Designing a Fact Table: Identify the grain, dimensions, and measures, then create the schema to store these elements.
+11. Materialized View vs. Normal View
+•	Materialized View: Stores query results physically, enabling faster access.
+•	Normal View: Does not store data physically, and the query is executed each time the view is accessed.
+12. SCD (Slowly Changing Dimensions) in data warehousing
+•	Type 1: Overwrites old data with new data.
+•	Type 2: Keeps a history of changes by adding new rows.
+•	Type 3: Adds new columns to store previous values.
+dbt:
+1. Different materializations in dbt
+•	Table: Creates a table in the database.
+•	View: Creates a view in the database.
+•	Incremental: Updates only the new or changed data.
+•	Ephemeral: Intermediate tables that are not written to the database but used in other models.
+2. How to create a dbt model
+Example:
+sql
+-- models/my_model.sql
+SELECT *
+FROM {{ ref('my_source_table') }}
+3. Various configurations in dbt
+Configurations can be set in dbt_project.yml, model files, or at the model level.
+yaml
+# dbt_project.yml
+models:
+  my_project:
+    materialized: table
+    schema: analytics
+4. What is a macro and how to design one
+A macro is a reusable piece of SQL code that can be called in models or other macros.
+Example:
+sql
+-- macros/my_macro.sql
+{% macro my_macro() %}
+  SELECT *
+  FROM my_table
+{% endmacro %}
+5. How to schedule dbt jobs
+Jobs can be scheduled using dbt Cloud or external scheduling tools like Airflow or cron jobs.
+6. Why use {%- -%} in Jinja templating
+Using {%- -%} trims whitespace before and after the block. Without the -, the template will include whitespace in the output.
+7. dbt Cloud vs. dbt Core
+•	dbt Cloud: Managed service with a web-based UI, scheduling, and logging.
+•	dbt Core: Open-source, command-line version that you run locally or on a server.
+8. How incremental models work in dbt
+Incremental models update only the new or changed data since the last run, improving performance for large datasets.
+9. When to use dbt in your project
+Use dbt for transforming data in your warehouse, applying data modeling best practices, and maintaining a clean codebase.
+10. How to source raw data from the warehouse in dbt
+Use the source configuration in dbt to reference raw data tables.
+Example:
+sql
+-- models/my_model.sql
+SELECT *
+FROM {{ source('raw_data', 'my_table') }}
+11. Passing environment variables in dbt
+Environment variables can be accessed in dbt using the env_var function.
+Example:
+yaml
+# profiles.yml
+my_profile:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DB_HOST') }}"
+      user: "{{ env_var('DB_USER') }}"
+      password: "{{ env_var('DB_PASSWORD') }}"
+      ...
+Airflow:
+1. Which operators are you working with in Airflow?
+Common operators include:
+•	PythonOperator
+•	BashOperator
+•	PostgresOperator
+•	BigQueryOperator
+•	EmailOperator
+•	BranchPythonOperator
+2. Different ways to run Python functions and SQL scripts in Airflow
+•	Python Functions: Use PythonOperator.
+•	SQL Scripts: Use PostgresOperator, MySqlOperator, BigQueryOperator, etc.
+3. How to scale Airflow jobs
+•	Horizontal Scaling: Add more worker nodes.
+•	Vertical Scaling: Increase resources (CPU, memory) for each worker node.
+•	Celery Executor: Use Cel
+
