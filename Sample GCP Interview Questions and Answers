@@ -1,0 +1,126 @@
+1. SQL Query to Get Employee with 3rd Highest Salary from Each Department:
+sql
+SELECT department, employee_name, salary
+FROM (
+  SELECT department, employee_name, salary,
+         ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS row_num
+  FROM employees
+) AS ranked_salaries
+WHERE row_num = 3;
+This query partitions the data by department and orders the salaries in descending order. The ROW_NUMBER function assigns a unique rank to each salary within each department, and we filter for the 3rd highest salary using row_num = 3.
+
+2. SQL Query to Fetch 50 Percent of Records from a Table Without TOP/LIMIT:
+sql
+WITH temp AS (
+  SELECT *, ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS row_num
+  FROM table_name
+)
+SELECT *
+FROM temp
+WHERE row_num <= (SELECT COUNT(*) FROM table_name) / 2;
+This query assigns a row number to each record and then selects records where the row number is less than or equal to half the total count of records.
+
+3. Python Program to Print All Subarrays with Sum 0 (Using One For Loop):
+python
+def print_zero_sum_subarrays(arr):
+    n = len(arr)
+    sum_map = {}
+    current_sum = 0
+
+    for i in range(n):
+        current_sum += arr[i]
+
+        if current_sum == 0:
+            print(arr[:i+1])
+
+        if current_sum in sum_map:
+            subarrays = sum_map[current_sum]
+            for subarray in subarrays:
+                print(arr[subarray+1:i+1])
+        else:
+            sum_map[current_sum] = []
+
+        sum_map[current_sum].append(i)
+
+# Example usage
+arr = [4, 2, -3, -1, 0, 4]
+print_zero_sum_subarrays(arr)
+This program uses a dictionary to store the sums and their corresponding indices. It prints subarrays whenever a sum of 0 is found.
+
+4. Optimization Techniques in Spark:
+DataFrame and Dataset APIs: Use these high-level APIs for better optimization over RDDs.
+
+Caching and Persistence: Cache frequently accessed data to avoid repeated computation.
+
+Partitioning: Use proper partitioning to distribute data evenly across nodes.
+
+Broadcast Variables: Use broadcast variables to distribute large read-only data efficiently.
+
+Columnar Storage Formats: Use formats like Parquet or ORC for better I/O performance.
+
+5. Types of Joins in Spark:
+Inner Join: Only matches records from both tables.
+
+Left Outer Join: All records from the left table and matched records from the right table.
+
+Right Outer Join: All records from the right table and matched records from the left table.
+
+Full Outer Join: All records from both tables, matched and unmatched.
+
+Semi Join: Only records from the left table that have matches in the right table.
+
+Anti Join: Only records from the left table that do not have matches in the right table.
+
+6. Approaches to Overcome Skewness:
+Salting: Adding a random key to distribute data more evenly.
+
+Map-Side Aggregation: Aggregating data before the shuffle phase.
+
+Partition Pruning: Using filter conditions to reduce the amount of data processed.
+
+7. Deciding Number of Partitions in Salting:
+Consider the amount of data and the cluster's resources. Aim for a balanced number of partitions to avoid overhead but still ensure even distribution. A common heuristic is 2-4 times the number of available cores in the cluster.
+
+8. Types of Storage in GCS:
+Standard Storage: For frequently accessed data.
+
+Nearline Storage: For data accessed less than once a month.
+
+Coldline Storage: For data accessed less than once a year.
+
+Archive Storage: For long-term storage, accessed less than once a year.
+
+9. Fetching Logs in Data Proc:
+Use the Google Cloud Console or the gcloud command-line tool to access logs. You can view logs in the Logs Viewer by navigating to the "Logs" section in the Cloud Console under your Dataproc cluster.
+
+10. Architecture of BigQuery:
+BigQuery uses a distributed architecture with the following components:
+
+Dremel Execution Engine: For query execution using a columnar storage format.
+
+Colossus: Google’s distributed file system for storing data.
+
+Borg: Cluster management system that schedules jobs. BigQuery uses a combination of SQL engines, distributed storage, and query optimization techniques to handle large datasets efficiently.
+
+11. Types of BigQuery Tables:
+Native Tables: Stored in BigQuery’s internal storage.
+
+External Tables: Reference data stored outside BigQuery, such as in Google Cloud Storage.
+
+Materialized Views: Precomputed views stored for faster access.
+
+Partitioned Tables: Split into partitions for better query performance.
+
+Clustered Tables: Data organized based on one or more columns.
+
+12. Sharing a BigQuery Table Without Direct Access:
+You can create a view on top of the table and share the view with others. This way, users can query the view without having direct access to the underlying table. Here’s an example:
+
+sql
+CREATE VIEW project_id.dataset_id.view_name AS
+SELECT * FROM project_id.dataset_id.table_name;
+Then grant access to the view:
+
+sql
+GRANT SELECT ON project_id.dataset_id.view_name TO 'user:email@example.com';
+I hope these detailed answers help you in your data engineering journey! If you have any more questions, feel free to ask.
