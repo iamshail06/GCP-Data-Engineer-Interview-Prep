@@ -1,0 +1,156 @@
+Partitioning in BigQuery:
+Partitioning divides your table into smaller segments, called partitions, to optimize query performance and manage costs. BigQuery supports several types of partitioning:
+
+Date/Time Partitioning:
+
+Partition by DATE: Based on a column of DATE type.
+
+Partition by TIMESTAMP: Based on a column of TIMESTAMP type.
+
+Example: Partitioning by DATE
+Step 1: Create a Partitioned Table Here's an example of creating a partitioned table based on the order_date column:
+
+sql
+CREATE TABLE mydataset.orders_partitioned
+(
+  order_id INT64,
+  customer_id INT64,
+  order_date DATE,
+  amount FLOAT64
+)
+PARTITION BY order_date;
+Step 2: Insert Data You can insert data into this table as usual:
+
+sql
+INSERT INTO mydataset.orders_partitioned (order_id, customer_id, order_date, amount)
+VALUES (1, 101, '2024-01-01', 150.0),
+       (2, 102, '2024-01-02', 200.0),
+       (3, 103, '2024-01-02', 250.0);
+Step 3: Querying the Partitioned Table When you query the table, BigQuery scans only the relevant partitions:
+
+sql
+SELECT order_id, customer_id, amount
+FROM mydataset.orders_partitioned
+WHERE order_date = '2024-01-02';
+Clustering in BigQuery:
+Clustering organizes data within each partition based on one or more columns to further improve query performance. Clustering is particularly effective when filtering or aggregating on clustered columns.
+
+Example: Clustering by Customer ID and Order Amount
+Step 1: Create a Clustered and Partitioned Table Here's an example of creating a clustered table on customer_id and amount, partitioned by order_date:
+
+sql
+CREATE TABLE mydataset.orders_clustered
+(
+  order_id INT64,
+  customer_id INT64,
+  order_date DATE,
+  amount FLOAT64
+)
+PARTITION BY order_date
+CLUSTER BY customer_id, amount;
+Step 2: Insert Data Insert data into the clustered and partitioned table as usual:
+
+sql
+INSERT INTO mydataset.orders_clustered (order_id, customer_id, order_date, amount)
+VALUES (1, 101, '2024-01-01', 150.0),
+       (2, 102, '2024-01-02', 200.0),
+       (3, 103, '2024-01-02', 250.0),
+       (4, 101, '2024-01-03', 300.0),
+       (5, 102, '2024-01-03', 350.0);
+Step 3: Querying the Clustered and Partitioned Table Queries that filter or aggregate on the clustered columns benefit from reduced scan times:
+
+sql
+SELECT order_id, amount
+FROM mydataset.orders_clustered
+WHERE customer_id = 101
+AND order_date BETWEEN '2024-01-01' AND '2024-01-03'
+ORDER BY amount DESC;
+Benefits of Partitioning and Clustering:
+Improved Query Performance: By scanning only the relevant partitions and clustered data, BigQuery reduces the amount of data processed.
+
+Cost Management: With reduced data scans, you can lower query costs.
+
+Efficient Data Management: Easier to manage and query large datasets.
+
+Considerations:
+Partition Limitations: Avoid creating too many partitions, as it can lead to performance overhead.
+
+Effective Clustering: Choose columns with high cardinality for clustering to maximize performance benefits.
+
+By leveraging partitioning and clustering, you can significantly optimize your BigQuery data processing and queries.
+
+
+High Cardinality Explained:
+High Cardinality: Columns with a large number of unique values (e.g., user ID, transaction ID).
+
+Low Cardinality: Columns with a small number of unique values (e.g., gender, Boolean flags).
+
+Benefits of High Cardinality Columns for Clustering:
+Efficient Data Organization: Clustering high cardinality columns helps organize data more efficiently, reducing the amount of data scanned during queries.
+
+Improved Query Performance: Queries filtering or aggregating on clustered columns can quickly locate the relevant data, leading to faster execution times.
+
+Cost Savings: By scanning less data, clustering helps lower query costs.
+
+Practical Example:
+Suppose you have a sales table with the following structure:
+
+transaction_id: Unique identifier for each transaction (high cardinality).
+
+customer_id: Unique identifier for each customer (high cardinality).
+
+purchase_date: Date of purchase.
+
+amount: Transaction amount.
+
+product_category: Category of the purchased product (low cardinality).
+
+Step 1: Create a Partitioned and Clustered Table
+We'll partition the table by purchase_date and cluster it by transaction_id and customer_id.
+
+sql
+CREATE TABLE mydataset.sales
+(
+  transaction_id STRING,
+  customer_id STRING,
+  purchase_date DATE,
+  amount FLOAT64,
+  product_category STRING
+)
+PARTITION BY purchase_date
+CLUSTER BY transaction_id, customer_id;
+Step 2: Insert Data
+Insert some data into the table:
+
+sql
+INSERT INTO mydataset.sales (transaction_id, customer_id, purchase_date, amount, product_category)
+VALUES ('T1', 'C1', '2024-01-01', 100.0, 'Electronics'),
+       ('T2', 'C2', '2024-01-02', 200.0, 'Clothing'),
+       ('T3', 'C1', '2024-01-02', 150.0, 'Groceries'),
+       ('T4', 'C3', '2024-01-03', 250.0, 'Electronics');
+Step 3: Querying the Clustered Table
+Querying the table with filters on clustered columns will benefit from reduced scan times:
+
+sql
+SELECT transaction_id, amount
+FROM mydataset.sales
+WHERE customer_id = 'C1'
+AND purchase_date BETWEEN '2024-01-01' AND '2024-01-03'
+ORDER BY transaction_id;
+In this example:
+
+Partitioning by purchase_date ensures that only relevant date partitions are scanned.
+
+Clustering by transaction_id and customer_id optimizes queries filtering by these columns, improving performance and reducing costs.
+
+Choosing the Right Columns:
+High Cardinality Columns: Suitable for clustering as they help distribute data evenly (e.g., IDs, timestamps).
+
+Low Cardinality Columns: Better for filtering or grouping but not as effective for clustering (e.g., categorical data).
+
+Additional Tips:
+Combine Partitioning and Clustering: Use both to maximize performance benefits.
+
+Monitor Query Performance: Regularly review and optimize clustering based on query patterns.
+
+By choosing high cardinality columns for clustering, you can significantly enhance the performance and efficiency of your BigQuery queries.
